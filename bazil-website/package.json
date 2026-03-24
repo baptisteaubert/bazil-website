@@ -1,0 +1,15 @@
+{
+  "name": "bazil-website",
+  "version": "1.0.0",
+  "description": "Bazil — Personalised meal planning with Instacart integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
