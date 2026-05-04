@@ -1993,13 +1993,63 @@ function updateSelectAllBtn() {
 // ======================================================
 // CHECKOUT MODAL & INSTACART API INTEGRATION
 // ======================================================
-function placeOrder() {
+async function placeOrder() {
   const items = Object.values(cart);
   if (items.length === 0) {
     showToast('Please add ingredients to your cart first');
     return;
   }
-  openCheckout();
+
+  const btn = document.getElementById('order-btn');
+  const originalHTML = btn.innerHTML;
+  btn.innerHTML = 'Creating shopping list...';
+  btn.disabled = true;
+
+  const lineItems = items.map(item => ({
+    name: item.name,
+    display_text: item.display,
+    line_item_measurements: [{
+      quantity: Math.ceil(item.qty || 1),
+      unit: item.unit || 'each'
+    }]
+  }));
+
+  try {
+    const response = await fetch(INSTACART_API_URL, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        title: 'Bazil Weekly Meal Plan',
+        link_type: 'shopping_list',
+        line_items: lineItems,
+        landing_page_configuration: {
+          partner_linkback_url: 'https://bazil.app',
+          enable_pantry_items: false
+        }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('API error: ' + response.status);
+    }
+
+    const data = await response.json();
+
+    if (data.products_link_url) {
+      window.location.href = data.products_link_url;
+      return;
+    }
+
+    throw new Error('No products_link_url in response');
+  } catch (err) {
+    console.error('Instacart API error:', err);
+    btn.innerHTML = originalHTML;
+    btn.disabled = false;
+    showToast('Could not create shopping list — please try again');
+  }
 }
 
 function openCheckout() {
