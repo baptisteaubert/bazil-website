@@ -360,6 +360,11 @@
       box-shadow: 0 20px 60px rgba(0,0,0,0.25); overflow: hidden;
       animation: fadeIn 0.3s ease;
     }
+    .recipe-hero {
+      display: block; width: 100%; height: 240px; object-fit: cover;
+      background: #f3efe6; border-bottom: 1px solid rgba(0,0,0,0.04);
+    }
+    .recipe-modal.no-image .recipe-hero { display: none; }
     .recipe-modal-header {
       background: var(--basilic); color: #fff; padding: 28px 32px 24px;
       position: relative;
@@ -502,6 +507,11 @@
       cursor: pointer; align-items: center;
     }
     .meal-item:hover { background: var(--creme); }
+    .meal-thumb {
+      width: 64px; height: 64px; border-radius: 10px;
+      object-fit: cover; flex-shrink: 0;
+      background: #f3efe6;
+    }
     .meal-type-badge {
       font-size: 10px; font-weight: 700; text-transform: uppercase;
       letter-spacing: 1px; padding: 4px 10px; border-radius: 20px;
@@ -1105,7 +1115,8 @@
 
 <!-- RECIPE DETAIL MODAL -->
 <div class="recipe-overlay" id="recipe-overlay" onclick="if(event.target===this)closeRecipe()">
-  <div class="recipe-modal">
+  <div class="recipe-modal" id="recipe-modal">
+    <img class="recipe-hero" id="recipe-image" alt="" />
     <div class="recipe-modal-header">
       <span class="recipe-type-badge" id="recipe-badge"></span>
       <div class="recipe-modal-title" id="recipe-title"></div>
@@ -1557,6 +1568,7 @@ function renderMealPlan(filter) {
         <div class="meals-list">
           ${meals.map((m, mi) => `
             <div class="meal-item" onclick="openRecipe(${i}, ${day.meals.indexOf(m)})">
+              <img class="meal-thumb" src="images/${recipeSlug(m.name)}.jpg" onerror="this.remove()" alt="" loading="lazy">
               <span class="meal-type-badge ${m.type}">${
                 m.type === 'breakfast' ? 'Breakfast' :
                 m.type === 'lunch' ? 'Lunch' :
@@ -2153,9 +2165,30 @@ async function sendToInstacart() {
 // ======================================================
 // RECIPE DETAIL MODAL
 // ======================================================
+function recipeSlug(name) {
+  // Mirrors the slug convention used to name the image files in /images/.
+  // Lowercase, drop common joiner words, replace any non-alphanumeric run with a hyphen.
+  return (name || '')
+    .toLowerCase()
+    .replace(/\b(with|and)\b/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function openRecipe(dayIdx, mealIdx) {
   const meal = currentMealPlan[dayIdx]?.meals[mealIdx];
   if (!meal) return;
+
+  // Hero image: try /images/{slug}.jpg, gracefully hide if it 404s.
+  const modal = document.getElementById('recipe-modal');
+  const heroImg = document.getElementById('recipe-image');
+  modal.classList.remove('no-image');
+  heroImg.style.display = '';
+  heroImg.onerror = function () {
+    modal.classList.add('no-image');
+  };
+  heroImg.alt = meal.name;
+  heroImg.src = 'images/' + recipeSlug(meal.name) + '.jpg';
 
   // Badge
   const badge = document.getElementById('recipe-badge');

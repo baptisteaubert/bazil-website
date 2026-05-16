@@ -1,3 +1,14 @@
 node_modules/
 .env
 .DS_Store
+
+# PNG originals (~186 MB) — JPG copies in images/ are what the site uses
+images/*.png
+
+# Claude / Cowork session scratch
+.claude/
+
+# Local-only data + scripts (not used by the running site)
+new_recipes.csv
+new_meals.js
+package-lock.json
