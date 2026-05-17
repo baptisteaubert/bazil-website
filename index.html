@@ -642,8 +642,9 @@
       animation: pulse 1.5s ease infinite;
     }
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
-    .meal-info { flex: 1; }
-    .meal-name { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+    .meal-info { flex: 1; min-width: 0; }
+    .meal-info .meal-type-badge { display: inline-block; margin-bottom: 6px; }
+    .meal-name { font-weight: 700; font-size: 14px; margin-bottom: 2px; line-height: 1.3; }
     .meal-meta { font-size: 12px; color: var(--text-muted); }
     .meal-cal {
       font-weight: 700; font-size: 13px; color: var(--basilic);
@@ -1724,16 +1725,15 @@ function renderMealPlan(filter) {
           ${meals.map((m, mi) => `
             <div class="meal-item" onclick="openRecipe(${i}, ${day.meals.indexOf(m)})">
               <img class="meal-thumb" src="images/${recipeSlug(m.name)}.jpg" onerror="this.remove()" alt="" loading="lazy">
-              <span class="meal-type-badge ${m.type}">${
-                m.type === 'breakfast' ? 'Breakfast' :
-                m.type === 'lunch' ? 'Lunch' :
-                m.type === 'dinner' ? 'Dinner' : 'Snack'
-              }</span>
               <div class="meal-info">
+                <span class="meal-type-badge ${m.type}">${
+                  m.type === 'breakfast' ? 'Breakfast' :
+                  m.type === 'lunch' ? 'Lunch' :
+                  m.type === 'dinner' ? 'Dinner' : 'Snack'
+                }</span>
                 <div class="meal-name">${m.name}</div>
-                <div class="meal-meta">${m.prepMin} min • ${m.difficulty}</div>
+                <div class="meal-meta">${m.prepMin} min • ${m.difficulty} • ${m.cal} kcal</div>
               </div>
-              <div class="meal-cal">${m.cal} kcal</div>
             </div>
           `).join('')}
           ${meals.length === 0 ? '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">No meals match this filter</div>' : ''}
