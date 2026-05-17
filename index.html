@@ -819,6 +819,36 @@
       color: #fff; font-size: 24px; cursor: pointer;
     }
     @media (max-width: 768px) { .mobile-menu-btn { display: block; } }
+
+    /* Mobile action bar — sticky bottom CTA with cart status. Solves: (1) Shop button
+       at the very bottom of a long Order page, (2) jumping from My Menu to Order
+       without opening the hamburger. */
+    .mobile-action-bar { display: none; }
+    @media (max-width: 768px) {
+      .mobile-action-bar {
+        display: flex; position: fixed; bottom: 0; left: 0; right: 0;
+        background: #fff; padding: 10px 16px;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom));
+        box-shadow: 0 -6px 24px rgba(0,0,0,0.10);
+        z-index: 90; align-items: center; gap: 12px;
+      }
+      body { padding-bottom: 86px; }
+      .mab-info { flex: 1; min-width: 0; }
+      .mab-count {
+        font-weight: 700; font-size: 14px; color: var(--basilic);
+        line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .mab-amount { font-size: 12px; color: var(--text-muted); line-height: 1.3; margin-top: 2px; }
+      .mab-btn {
+        background: #003D29; color: #FAF1E5;
+        border: none; padding: 12px 20px; border-radius: 24px;
+        font-weight: 700; font-size: 14px; cursor: pointer;
+        white-space: nowrap; transition: transform 0.15s;
+        box-shadow: 0 4px 12px rgba(0,61,41,0.25);
+      }
+      .mab-btn:active { transform: scale(0.96); }
+      .mab-btn:disabled { background: #ccc; color: #888; cursor: not-allowed; box-shadow: none; }
+    }
   </style>
 </head>
 <body>
@@ -1159,6 +1189,15 @@
   </div>
 </div>
 
+<!-- MOBILE ACTION BAR — sticky bottom CTA -->
+<div class="mobile-action-bar" id="mobile-action-bar">
+  <div class="mab-info">
+    <div class="mab-count" id="mab-count">Order ingredients</div>
+    <div class="mab-amount" id="mab-amount">Shop on Instacart</div>
+  </div>
+  <button class="mab-btn" id="mab-btn" onclick="handleMobileActionBar()">Order →</button>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -1209,6 +1248,51 @@ function navigate(page) {
   document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
   document.querySelector('.nav-link[data-page="' + page + '"]').classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  updateMobileActionBar();
+}
+
+// Mobile action bar — sticky bottom CTA. Adapts to current page + cart state.
+function updateMobileActionBar() {
+  const countEl  = document.getElementById('mab-count');
+  const amountEl = document.getElementById('mab-amount');
+  const btnEl    = document.getElementById('mab-btn');
+  if (!countEl || !btnEl) return;
+
+  const currentPage = (document.querySelector('.page.active')?.id || '').replace('page-', '');
+  const entries = (typeof cart !== 'undefined') ? Object.values(cart) : [];
+  const itemCount = entries.length;
+  const total = entries.reduce((s, e) => s + (e.price || 0), 0);
+
+  if (currentPage === 'order') {
+    btnEl.textContent = itemCount === 0 ? 'Pick items' : 'Shop ingredients →';
+    btnEl.disabled = itemCount === 0;
+    if (itemCount === 0) {
+      countEl.textContent = 'Cart is empty';
+      amountEl.textContent = 'Tick ingredients above to add';
+    } else {
+      countEl.textContent = itemCount + ' item' + (itemCount > 1 ? 's' : '') + ' in cart';
+      amountEl.textContent = '£' + total.toFixed(2) + ' • via Instacart';
+    }
+  } else {
+    btnEl.textContent = 'Order →';
+    btnEl.disabled = false;
+    if (itemCount === 0) {
+      countEl.textContent = 'Order your ingredients';
+      amountEl.textContent = 'Get them delivered via Instacart';
+    } else {
+      countEl.textContent = itemCount + ' item' + (itemCount > 1 ? 's' : '') + ' in cart';
+      amountEl.textContent = '£' + total.toFixed(2) + ' • Review & order';
+    }
+  }
+}
+
+function handleMobileActionBar() {
+  const currentPage = (document.querySelector('.page.active')?.id || '').replace('page-', '');
+  if (currentPage === 'order') {
+    placeOrder();
+  } else {
+    navigate('order');
+  }
 }
 
 // ===== CHIPS (with reactive callback) =====
@@ -1309,8 +1393,8 @@ function getPreferences() {
 // ======================================================
 const MEAL_DB = [
   // ---- BREAKFASTS (18 recipes) ----
-  { type:'breakfast', name:'Berry Porridge', prepMin:15, difficulty:'Easy', cal:380, protein:12, carbs:58, fat:10, fiber:6, diets:['Omnivore','Vegetarian','Vegan','Flexitarian'], allergens:['Gluten'], cuisines:['French','Mediterranean','Italian'], ingredients:[{n:'Rolled oats',q:'80g',p:0.40},{n:'Mixed berries',q:'150g',p:2.20},{n:'Almond milk',q:'250ml',p:0.55},{n:'Honey',q:'1 tbsp',p:0.30},{n:'Chia seeds',q:'1 tbsp',p:0.25}], steps:['Bring oats and almond milk to a simmer in a saucepan over medium heat, stirring occasionally for 5 minutes.','Reduce heat and cook until thick and creamy, about 3 more minutes.','Serve in a bowl topped with mixed berries, chia seeds and a drizzle of honey.'] , batch:true, organic:true},
-  { type:'breakfast', name:'Acai Smoothie Bowl', prepMin:10, difficulty:'Easy', cal:350, protein:10, carbs:52, fat:12, fiber:8, diets:['Omnivore','Vegetarian','Vegan','Flexitarian','Paleo'], allergens:['Tree Nuts'], cuisines:['Asian','French','Mediterranean','Mexican','Indian','Italian','Japanese','Lebanese'], ingredients:[{n:'Acai puree',q:'100g',p:3.50},{n:'Banana',q:'1 piece',p:0.15},{n:'Granola',q:'40g',p:0.70},{n:'Blueberries',q:'50g',p:1.00},{n:'Almond milk',q:'100ml',p:0.25}], steps:['Blend frozen acai puree, banana and a splash of almond milk until thick and smooth.','Pour into a bowl — it should be thicker than a regular smoothie.','Top with granola, blueberries and any other favourite toppings. Serve immediately.'] , organic:true},
+  { type:'breakfast', name:'Berry Porridge', prepMin:15, difficulty:'Easy', cal:380, protein:12, carbs:58, fat:10, fiber:6, diets:['Omnivore','Vegetarian','Flexitarian'], allergens:['Gluten','Tree Nuts'], cuisines:['French','Mediterranean','Italian'], ingredients:[{n:'Rolled oats',q:'80g',p:0.40},{n:'Mixed berries',q:'150g',p:2.20},{n:'Almond milk',q:'250ml',p:0.55},{n:'Honey',q:'1 tbsp',p:0.30},{n:'Chia seeds',q:'1 tbsp',p:0.25}], steps:['Bring oats and almond milk to a simmer in a saucepan over medium heat, stirring occasionally for 5 minutes.','Reduce heat and cook until thick and creamy, about 3 more minutes.','Serve in a bowl topped with mixed berries, chia seeds and a drizzle of honey.'] , batch:true, organic:true},
+  { type:'breakfast', name:'Acai Smoothie Bowl', prepMin:10, difficulty:'Easy', cal:350, protein:10, carbs:52, fat:12, fiber:8, diets:['Omnivore','Vegetarian','Vegan','Flexitarian','Paleo'], allergens:['Gluten','Tree Nuts'], cuisines:['Asian','French','Mediterranean','Mexican','Indian','Italian','Japanese','Lebanese'], ingredients:[{n:'Acai puree',q:'100g',p:3.50},{n:'Banana',q:'1 piece',p:0.15},{n:'Granola',q:'40g',p:0.70},{n:'Blueberries',q:'50g',p:1.00},{n:'Almond milk',q:'100ml',p:0.25}], steps:['Blend frozen acai puree, banana and a splash of almond milk until thick and smooth.','Pour into a bowl — it should be thicker than a regular smoothie.','Top with granola, blueberries and any other favourite toppings. Serve immediately.'] , organic:true},
   { type:'breakfast', name:'Avocado & Poached Egg Toast', prepMin:12, difficulty:'Easy', cal:420, protein:18, carbs:32, fat:26, fiber:7, diets:['Omnivore','Vegetarian','Pescatarian','Flexitarian'], allergens:['Gluten','Eggs'], cuisines:['French','Mediterranean','Mexican','Italian'], ingredients:[{n:'Whole wheat bread',q:'2 slices',p:0.40},{n:'Avocado',q:'1 piece',p:0.99},{n:'Organic eggs',q:'2',p:0.58},{n:'Lemon',q:'1/2',p:0.18},{n:'Chilli flakes',q:'pinch',p:0.05}], steps:['Toast the whole wheat bread until golden and crisp.','Halve the avocado, remove pit, and mash the flesh with lemon juice, salt and pepper.','Poach eggs in gently simmering water with a splash of vinegar for 3 minutes until whites are set.','Spread avocado on toast, top with poached eggs and a pinch of chilli flakes.'] , budget:true, organic:true},
   { type:'breakfast', name:'Shakshuka', prepMin:25, difficulty:'Medium', cal:320, protein:18, carbs:22, fat:18, fiber:5, diets:['Omnivore','Vegetarian','Pescatarian','Flexitarian'], allergens:['Eggs'], cuisines:['Lebanese','Mediterranean','Indian'], ingredients:[{n:'Organic eggs',q:'3',p:0.87},{n:'Crushed tomatoes',q:'400g',p:0.59},{n:'Bell pepper',q:'1',p:0.65},{n:'Onions',q:'1',p:0.20},{n:'Cumin',q:'1 tsp',p:0.10},{n:'Fresh parsley',q:'handful',p:0.30}], steps:['Sauté diced onion and bell pepper in olive oil until softened, about 5 minutes.','Add cumin, paprika and garlic, cook for 1 minute until fragrant.','Pour in crushed tomatoes, season with salt and pepper, and simmer for 10 minutes.','Make wells in the sauce and crack in the eggs. Cover and cook 5-7 minutes until whites are set.','Garnish with fresh parsley and serve straight from the pan with crusty bread.'] , batch:true, budget:true},
   { type:'breakfast', name:'Overnight Oats', prepMin:5, difficulty:'Easy', cal:390, protein:15, carbs:58, fat:10, fiber:7, diets:['Omnivore','Vegetarian','Flexitarian'], allergens:['Gluten','Lactose'], cuisines:['French','Mediterranean','Italian'], ingredients:[{n:'Rolled oats',q:'80g',p:0.40},{n:'Greek yogurt',q:'100g',p:0.45},{n:'Milk',q:'150ml',p:0.20},{n:'Chia seeds',q:'1 tbsp',p:0.25},{n:'Honey',q:'1 tbsp',p:0.30},{n:'Banana',q:'1 piece',p:0.15}], steps:['Combine oats, yogurt, milk, chia seeds and honey in a jar or container.','Stir well, seal, and refrigerate overnight (or at least 4 hours).','In the morning, top with sliced banana and any desired toppings. Eat cold or warmed.'] , batch:true, budget:true, organic:true},
@@ -1318,11 +1402,11 @@ const MEAL_DB = [
   { type:'breakfast', name:'Turkish Eggs (Cilbir)', prepMin:15, difficulty:'Medium', cal:340, protein:16, carbs:10, fat:26, fiber:1, diets:['Omnivore','Vegetarian','Pescatarian','Flexitarian','Keto'], allergens:['Eggs','Lactose'], cuisines:['Lebanese','Mediterranean'], ingredients:[{n:'Organic eggs',q:'2',p:0.58},{n:'Greek yogurt',q:'150g',p:0.65},{n:'Butter',q:'30g',p:0.30},{n:'Garlic',q:'1 clove',p:0.05},{n:'Chilli flakes',q:'1 tsp',p:0.05},{n:'Fresh dill',q:'small bunch',p:0.40}], steps:['Mix Greek yogurt with a crushed garlic clove and a pinch of salt. Spread onto a plate.','Poach the eggs in gently simmering water for 3 minutes. Place on top of the yogurt.','Melt butter in a small pan, add chilli flakes and a pinch of paprika, swirl for 30 seconds.','Drizzle the spiced butter over the eggs and yogurt. Garnish with fresh dill.'] , budget:true},
   { type:'breakfast', name:'Blueberry Pancakes', prepMin:20, difficulty:'Easy', cal:440, protein:12, carbs:62, fat:16, fiber:3, diets:['Omnivore','Vegetarian','Flexitarian'], allergens:['Gluten','Eggs','Lactose'], cuisines:['French','Mediterranean','Italian'], ingredients:[{n:'Whole wheat flour',q:'150g',p:0.30},{n:'Blueberries',q:'125g',p:1.65},{n:'Organic eggs',q:'2',p:0.58},{n:'Milk',q:'200ml',p:0.25},{n:'Butter',q:'20g',p:0.20}], steps:['Whisk flour, eggs and milk into a smooth batter. Let rest 5 minutes.','Gently fold in the blueberries.','Melt a little butter in a non-stick pan over medium heat. Pour small ladles of batter.','Cook about 2 minutes per side until golden. Stack and serve warm with maple syrup.'] , budget:true, organic:true},
   { type:'breakfast', name:'Eggs Benedict', prepMin:25, difficulty:'Advanced', cal:520, protein:24, carbs:30, fat:34, fiber:2, diets:['Omnivore','Flexitarian'], allergens:['Gluten','Eggs','Lactose'], cuisines:['French','Mediterranean','Italian'], ingredients:[{n:'English muffins',q:'2',p:0.40},{n:'Organic eggs',q:'2',p:0.58},{n:'Sliced ham',q:'2 slices',p:0.60},{n:'Butter',q:'50g',p:0.50},{n:'Lemon',q:'1/2',p:0.18}], steps:['Toast English muffins until golden. Warm the ham slices in a dry pan.','Poach eggs in gently simmering water with vinegar for 3 minutes.','For hollandaise: whisk egg yolk and lemon juice over a bain-marie, slowly drizzle in melted butter while whisking until thick and creamy.','Assemble: muffin half, ham, poached egg, generous spoon of hollandaise. Serve immediately.'] , budget:true},
-  { type:'breakfast', name:'Chia Seed Pudding', prepMin:5, difficulty:'Easy', cal:280, protein:10, carbs:30, fat:14, fiber:12, diets:['Omnivore','Vegetarian','Vegan','Flexitarian','Paleo'], allergens:[], cuisines:['French','Mediterranean','Asian','Mexican','Indian','Italian','Japanese','Lebanese'], ingredients:[{n:'Chia seeds',q:'40g',p:0.55},{n:'Coconut milk',q:'250ml',p:0.75},{n:'Honey',q:'1 tbsp',p:0.30},{n:'Mango',q:'1/2',p:0.75},{n:'Shredded coconut',q:'1 tbsp',p:0.15}], steps:['Stir chia seeds into coconut milk with honey. Mix well to avoid clumps.','Refrigerate for at least 2 hours or overnight until set to a pudding consistency.','Top with diced mango and shredded coconut before serving.'] , batch:true, budget:true, organic:true},
+  { type:'breakfast', name:'Chia Seed Pudding', prepMin:5, difficulty:'Easy', cal:280, protein:10, carbs:30, fat:14, fiber:12, diets:['Omnivore','Vegetarian','Flexitarian','Paleo'], allergens:[], cuisines:['French','Mediterranean','Asian','Mexican','Indian','Italian','Japanese','Lebanese'], ingredients:[{n:'Chia seeds',q:'40g',p:0.55},{n:'Coconut milk',q:'250ml',p:0.75},{n:'Honey',q:'1 tbsp',p:0.30},{n:'Mango',q:'1/2',p:0.75},{n:'Shredded coconut',q:'1 tbsp',p:0.15}], steps:['Stir chia seeds into coconut milk with honey. Mix well to avoid clumps.','Refrigerate for at least 2 hours or overnight until set to a pudding consistency.','Top with diced mango and shredded coconut before serving.'] , batch:true, budget:true, organic:true},
   { type:'breakfast', name:'French Toast', prepMin:15, difficulty:'Easy', cal:380, protein:14, carbs:42, fat:16, fiber:2, diets:['Omnivore','Vegetarian','Flexitarian'], allergens:['Gluten','Eggs','Lactose'], cuisines:['French','Italian','Mediterranean'], ingredients:[{n:'Whole wheat bread',q:'3 slices',p:0.60},{n:'Organic eggs',q:'2',p:0.58},{n:'Milk',q:'100ml',p:0.13},{n:'Butter',q:'20g',p:0.20},{n:'Mixed berries',q:'100g',p:1.50},{n:'Honey',q:'1 tbsp',p:0.30}], steps:['Whisk eggs with milk, a pinch of cinnamon and a drop of vanilla.','Dip bread slices into the egg mixture, coating both sides well.','Fry in melted butter over medium heat, about 2 minutes each side until golden.','Serve topped with berries and a drizzle of honey.'] , budget:true},
   { type:'breakfast', name:'Smoked Salmon Bagel', prepMin:10, difficulty:'Easy', cal:420, protein:26, carbs:38, fat:18, fiber:2, diets:['Omnivore','Pescatarian','Flexitarian'], allergens:['Gluten','Lactose'], cuisines:['French','Mediterranean','Japanese'], ingredients:[{n:'Bagel',q:'1',p:0.50},{n:'Smoked salmon',q:'80g',p:3.60},{n:'Cream cheese',q:'30g',p:0.30},{n:'Lemon',q:'1/4',p:0.09},{n:'Fresh dill',q:'sprigs',p:0.20},{n:'Cucumber',q:'few slices',p:0.10}], steps:['Slice and lightly toast the bagel.','Spread cream cheese generously on both halves.','Layer smoked salmon on top, add cucumber slices.','Finish with a squeeze of lemon, fresh dill and cracked black pepper.'] },
   { type:'breakfast', name:'Protein Baked Oats', prepMin:30, difficulty:'Easy', cal:360, protein:22, carbs:42, fat:10, fiber:5, diets:['Omnivore','Vegetarian','Flexitarian'], allergens:['Gluten','Eggs','Lactose'], cuisines:['French','Mediterranean','Italian'], ingredients:[{n:'Rolled oats',q:'80g',p:0.40},{n:'Banana',q:'1 piece',p:0.15},{n:'Organic eggs',q:'1',p:0.29},{n:'Greek yogurt',q:'80g',p:0.35},{n:'Cocoa powder',q:'1 tbsp',p:0.15},{n:'Blueberries',q:'50g',p:0.65}], steps:['Preheat oven to 180°C. Blend oats, banana, egg, yogurt and cocoa powder until smooth.','Pour into a greased ramekin or small baking dish. Top with blueberries.','Bake for 25 minutes until set and golden on top.','Let cool slightly — it firms up as it cools. Eat warm from the dish.'] , batch:true, budget:true, organic:true},
-  { type:'breakfast', name:'Mango Coconut Smoothie Bowl', prepMin:10, difficulty:'Easy', cal:350, protein:8, carbs:52, fat:12, fiber:5, diets:['Omnivore','Vegetarian','Vegan','Flexitarian','Paleo'], allergens:[], cuisines:['Asian','French','Mediterranean','Mexican','Indian','Italian','Japanese','Lebanese'], ingredients:[{n:'Mango',q:'1 piece',p:1.75},{n:'Coconut milk',q:'200ml',p:0.85},{n:'Banana',q:'1 piece',p:0.15},{n:'Granola',q:'40g',p:0.70},{n:'Shredded coconut',q:'1 tbsp',p:0.15}], steps:['Blend frozen mango, coconut milk and banana until thick and smooth.','Pour into a bowl — it should be thicker than a regular smoothie.','Top with granola, shredded coconut and fresh fruit. Serve immediately.'] , organic:true},
+  { type:'breakfast', name:'Mango Coconut Smoothie Bowl', prepMin:10, difficulty:'Easy', cal:350, protein:8, carbs:52, fat:12, fiber:5, diets:['Omnivore','Vegetarian','Vegan','Flexitarian','Paleo'], allergens:['Gluten'], cuisines:['Asian','French','Mediterranean','Mexican','Indian','Italian','Japanese','Lebanese'], ingredients:[{n:'Mango',q:'1 piece',p:1.75},{n:'Coconut milk',q:'200ml',p:0.85},{n:'Banana',q:'1 piece',p:0.15},{n:'Granola',q:'40g',p:0.70},{n:'Shredded coconut',q:'1 tbsp',p:0.15}], steps:['Blend frozen mango, coconut milk and banana until thick and smooth.','Pour into a bowl — it should be thicker than a regular smoothie.','Top with granola, shredded coconut and fresh fruit. Serve immediately.'] , organic:true},
   { type:'breakfast', name:'Pesto Eggs on Toast', prepMin:10, difficulty:'Easy', cal:390, protein:20, carbs:28, fat:22, fiber:3, diets:['Omnivore','Vegetarian','Pescatarian','Flexitarian'], allergens:['Gluten','Eggs','Lactose','Tree Nuts'], cuisines:['Italian','Mediterranean'], ingredients:[{n:'Organic eggs',q:'2',p:0.58},{n:'Basil pesto',q:'2 tbsp',p:0.60},{n:'Whole wheat bread',q:'2 slices',p:0.40},{n:'Cherry tomatoes',q:'6',p:0.40},{n:'Grated Parmesan',q:'15g',p:0.45}], steps:['Heat pesto in a non-stick pan over medium-low heat until it starts to sizzle.','Crack eggs directly into the pesto. Cook gently for 3-4 minutes until whites are set.','Toast bread and halve the cherry tomatoes.','Serve eggs on toast, scatter with halved tomatoes and grated Parmesan.'] , budget:true},
   { type:'breakfast', name:'Homemade Granola & Yogurt', prepMin:5, difficulty:'Easy', cal:360, protein:14, carbs:48, fat:12, fiber:4, diets:['Omnivore','Vegetarian','Flexitarian'], allergens:['Lactose','Tree Nuts','Gluten'], cuisines:['French','Mediterranean','Italian'], ingredients:[{n:'Organic plain yogurt',q:'200g',p:0.55},{n:'Granola',q:'60g',p:1.05},{n:'Honey',q:'1 tbsp',p:0.30},{n:'Sliced almonds',q:'15g',p:0.45}], steps:['Spoon yogurt into a bowl.','Top with granola and sliced almonds.','Drizzle with honey and serve.'] , batch:true, budget:true, organic:true},
   { type:'breakfast', name:'Banana Oat Pancakes', prepMin:15, difficulty:'Easy', cal:310, protein:12, carbs:48, fat:8, fiber:5, diets:['Omnivore','Vegetarian','Flexitarian','Paleo'], allergens:['Eggs','Gluten'], cuisines:['French','Mediterranean','Italian','Asian','Mexican','Indian','Japanese','Lebanese'], ingredients:[{n:'Banana',q:'2 pieces',p:0.30},{n:'Rolled oats',q:'80g',p:0.40},{n:'Organic eggs',q:'2',p:0.58},{n:'Honey',q:'1 tsp',p:0.10}], steps:['Blend bananas, oats and eggs until you have a smooth batter.','Heat a non-stick pan over medium heat with a drop of oil.','Pour small rounds of batter and cook 2-3 minutes per side until golden.','Stack and serve with a drizzle of honey or fresh fruit.'] , batch:true, budget:true, organic:true},
@@ -1348,9 +1432,9 @@ const MEAL_DB = [
   { type:'lunch', name:'Cobb Salad', prepMin:20, difficulty:'Easy', cal:510, protein:38, carbs:12, fat:36, fiber:5, diets:['Omnivore','Flexitarian','Keto','Paleo'], allergens:['Eggs','Lactose'], cuisines:['French','Mediterranean'], ingredients:[{n:'Chicken breasts',q:'120g',p:2.20},{n:'Bacon',q:'2 rashers',p:0.95},{n:'Organic eggs',q:'2',p:0.58},{n:'Avocado',q:'1/2',p:0.50},{n:'Cherry tomatoes',q:'6',p:0.40},{n:'Romaine lettuce',q:'1/2 head',p:0.65},{n:'Blue cheese',q:'30g',p:0.60},{n:'Virgin olive oil',q:'2 tbsp',p:0.40}], steps:['Grill or pan-fry chicken until cooked through. Let rest and slice.','Crisp bacon in a pan, then chop. Boil eggs for 8 minutes, cool and halve.','Chop romaine, dice avocado, halve tomatoes, crumble blue cheese.','Arrange all ingredients in rows over the lettuce.','Dress with olive oil, red wine vinegar, mustard, salt and pepper.'] , organic:true},
 
   // ---- DINNERS (20 recipes) ----
-  { type:'dinner', name:'Spaghetti Bolognese', prepMin:40, difficulty:'Easy', cal:520, protein:28, carbs:58, fat:18, fiber:5, diets:['Omnivore','Flexitarian'], allergens:['Gluten'], cuisines:['Italian','Mediterranean','French'], ingredients:[{n:'Whole wheat spaghetti',q:'100g',p:0.26},{n:'Beef mince',q:'150g',p:2.25},{n:'Crushed tomatoes',q:'400g',p:0.59},{n:'Onions',q:'1',p:0.20},{n:'Carrots',q:'1',p:0.15},{n:'Garlic',q:'2 cloves',p:0.05},{n:'Virgin olive oil',q:'1 tbsp',p:0.20},{n:'Grated Parmesan',q:'15g',p:0.45}], steps:['Finely dice onion, carrot and garlic. Sauté in olive oil over medium heat for 5 minutes.','Add beef mince, breaking it up. Brown for 5 minutes until no pink remains.','Pour in crushed tomatoes. Add a pinch of sugar, Italian herbs, salt and pepper. Simmer 20-25 min.','Cook spaghetti in salted boiling water according to packet. Drain, reserving a cup of pasta water.','Toss spaghetti with sauce, adding a splash of pasta water for silkiness. Serve with Parmesan.'] , batch:true},
+  { type:'dinner', name:'Spaghetti Bolognese', prepMin:40, difficulty:'Easy', cal:520, protein:28, carbs:58, fat:18, fiber:5, diets:['Omnivore','Flexitarian'], allergens:['Gluten','Lactose'], cuisines:['Italian','Mediterranean','French'], ingredients:[{n:'Whole wheat spaghetti',q:'100g',p:0.26},{n:'Beef mince',q:'150g',p:2.25},{n:'Crushed tomatoes',q:'400g',p:0.59},{n:'Onions',q:'1',p:0.20},{n:'Carrots',q:'1',p:0.15},{n:'Garlic',q:'2 cloves',p:0.05},{n:'Virgin olive oil',q:'1 tbsp',p:0.20},{n:'Grated Parmesan',q:'15g',p:0.45}], steps:['Finely dice onion, carrot and garlic. Sauté in olive oil over medium heat for 5 minutes.','Add beef mince, breaking it up. Brown for 5 minutes until no pink remains.','Pour in crushed tomatoes. Add a pinch of sugar, Italian herbs, salt and pepper. Simmer 20-25 min.','Cook spaghetti in salted boiling water according to packet. Drain, reserving a cup of pasta water.','Toss spaghetti with sauce, adding a splash of pasta water for silkiness. Serve with Parmesan.'] , batch:true},
   { type:'dinner', name:'Chicken Tikka Masala', prepMin:40, difficulty:'Medium', cal:480, protein:36, carbs:28, fat:24, fiber:3, diets:['Omnivore','Flexitarian'], allergens:['Lactose'], cuisines:['Indian'], ingredients:[{n:'Chicken breasts',q:'200g',p:3.65},{n:'Greek yogurt',q:'80g',p:0.35},{n:'Crushed tomatoes',q:'400g',p:0.59},{n:'Onions',q:'1',p:0.20},{n:'Garlic',q:'3 cloves',p:0.08},{n:'Garam masala',q:'2 tsp',p:0.20},{n:'Coconut milk',q:'100ml',p:0.37},{n:'Basmati rice',q:'80g',p:0.25},{n:'Fresh ginger',q:'thumb',p:0.20}], steps:['Marinate diced chicken in yogurt, garam masala, turmeric and lemon juice for at least 20 minutes.','Grill or pan-fry chicken until charred and cooked through, about 8 minutes. Set aside.','Sauté diced onion in butter until golden. Add garlic, ginger, garam masala and cook 1 minute.','Add crushed tomatoes and coconut milk. Simmer 15 minutes until thickened.','Add chicken to sauce, cook 5 more minutes. Serve over basmati rice with fresh cilantro.'] , batch:true},
-  { type:'dinner', name:'Pad Thai', prepMin:25, difficulty:'Medium', cal:480, protein:24, carbs:56, fat:18, fiber:3, diets:['Omnivore','Pescatarian','Flexitarian'], allergens:['Peanuts','Soy','Eggs'], cuisines:['Asian'], ingredients:[{n:'Rice noodles',q:'120g',p:0.50},{n:'Peeled shrimp',q:'100g',p:2.15},{n:'Organic eggs',q:'1',p:0.29},{n:'Bean sprouts',q:'80g',p:0.30},{n:'Peanuts',q:'30g',p:0.25},{n:'Lime',q:'1',p:0.33},{n:'Soy sauce',q:'2 tbsp',p:0.15},{n:'Fish sauce',q:'1 tbsp',p:0.12},{n:'Green onions',q:'3',p:0.15}], steps:['Soak rice noodles in hot water for 8 minutes until pliable. Drain.','Mix sauce: soy sauce, fish sauce, lime juice, a tsp of sugar and a splash of tamarind if available.','Stir-fry shrimp in hot oil for 2 minutes. Push aside, scramble egg in the same wok.','Add noodles and sauce. Toss vigorously over high heat for 2-3 minutes.','Add bean sprouts and green onions for the last 30 seconds. Serve with crushed peanuts and lime.'] },
+  { type:'dinner', name:'Pad Thai', prepMin:25, difficulty:'Medium', cal:480, protein:24, carbs:56, fat:18, fiber:3, diets:['Omnivore','Pescatarian','Flexitarian'], allergens:['Peanuts','Soy','Eggs','Shellfish'], cuisines:['Asian'], ingredients:[{n:'Rice noodles',q:'120g',p:0.50},{n:'Peeled shrimp',q:'100g',p:2.15},{n:'Organic eggs',q:'1',p:0.29},{n:'Bean sprouts',q:'80g',p:0.30},{n:'Peanuts',q:'30g',p:0.25},{n:'Lime',q:'1',p:0.33},{n:'Soy sauce',q:'2 tbsp',p:0.15},{n:'Fish sauce',q:'1 tbsp',p:0.12},{n:'Green onions',q:'3',p:0.15}], steps:['Soak rice noodles in hot water for 8 minutes until pliable. Drain.','Mix sauce: soy sauce, fish sauce, lime juice, a tsp of sugar and a splash of tamarind if available.','Stir-fry shrimp in hot oil for 2 minutes. Push aside, scramble egg in the same wok.','Add noodles and sauce. Toss vigorously over high heat for 2-3 minutes.','Add bean sprouts and green onions for the last 30 seconds. Serve with crushed peanuts and lime.'] },
   { type:'dinner', name:'Butter Chicken', prepMin:45, difficulty:'Medium', cal:520, protein:34, carbs:30, fat:28, fiber:3, diets:['Omnivore','Flexitarian'], allergens:['Lactose'], cuisines:['Indian'], ingredients:[{n:'Chicken thighs',q:'200g',p:2.00},{n:'Butter',q:'30g',p:0.30},{n:'Crushed tomatoes',q:'400g',p:0.59},{n:'Coconut milk',q:'150ml',p:0.56},{n:'Onions',q:'1',p:0.20},{n:'Garlic',q:'3 cloves',p:0.08},{n:'Garam masala',q:'2 tsp',p:0.20},{n:'Fresh ginger',q:'thumb',p:0.20},{n:'Basmati rice',q:'80g',p:0.25}], steps:['Marinate chicken in yogurt, garam masala and turmeric for at least 20 minutes.','Sear chicken in butter until browned on all sides. Remove and set aside.','In the same pan, cook onion, garlic and ginger until soft. Add spices, cook 1 minute.','Add tomatoes and coconut milk. Simmer 15 minutes. Blend until smooth if desired.','Return chicken to sauce. Cook 10 more minutes. Serve over basmati rice with naan if desired.'] , batch:true},
   { type:'dinner', name:'Grilled Salmon with Vegetables', prepMin:20, difficulty:'Easy', cal:440, protein:38, carbs:22, fat:22, fiber:5, diets:['Omnivore','Pescatarian','Flexitarian','Keto','Paleo'], allergens:[], cuisines:['Mediterranean','French'], ingredients:[{n:'Salmon fillets',q:'1 fillet',p:3.00},{n:'Broccoli',q:'150g',p:0.60},{n:'Sweet potato',q:'1',p:0.60},{n:'Lemon',q:'1',p:0.36},{n:'Virgin olive oil',q:'2 tbsp',p:0.40},{n:'Garlic',q:'2 cloves',p:0.05}], steps:['Toss broccoli florets and cubed sweet potato with olive oil, garlic, salt and pepper. Roast at 200°C for 20 minutes.','Season salmon with lemon zest, salt and pepper. Pan-fry skin-side down for 4 minutes, flip and cook 3 more.','Squeeze lemon juice over the salmon. Serve alongside the roasted vegetables.'] , organic:true},
   { type:'dinner', name:'Thai Green Curry', prepMin:25, difficulty:'Medium', cal:480, protein:28, carbs:36, fat:24, fiber:4, diets:['Omnivore','Flexitarian'], allergens:['Soy'], cuisines:['Asian'], ingredients:[{n:'Chicken thighs',q:'200g',p:2.00},{n:'Green curry paste',q:'2 tbsp',p:0.40},{n:'Coconut milk',q:'400ml',p:1.49},{n:'Thai vegetables',q:'200g',p:2.29},{n:'Basmati rice',q:'80g',p:0.25},{n:'Fish sauce',q:'1 tbsp',p:0.12},{n:'Fresh basil',q:'handful',p:0.40},{n:'Lime',q:'1',p:0.33}], steps:['Fry curry paste in a splash of coconut milk for 1 minute until fragrant.','Add sliced chicken and cook for 3 minutes until sealed on all sides.','Pour in remaining coconut milk and bring to a gentle simmer.','Add vegetables and fish sauce. Cook 8-10 minutes until chicken is cooked through.','Stir in fresh basil and lime juice. Serve over steamed rice.'] , batch:true},
@@ -1366,7 +1450,7 @@ const MEAL_DB = [
   { type:'dinner', name:'Sheet Pan Lemon Herb Chicken', prepMin:35, difficulty:'Easy', cal:460, protein:40, carbs:28, fat:20, fiber:5, diets:['Omnivore','Flexitarian','Paleo','Keto'], allergens:[], cuisines:['Mediterranean','French','Italian'], ingredients:[{n:'Chicken thighs',q:'250g',p:2.50},{n:'Potatoes',q:'200g',p:0.45},{n:'Zucchini',q:'1',p:0.55},{n:'Bell pepper',q:'1',p:0.65},{n:'Lemon',q:'1',p:0.36},{n:'Garlic',q:'3 cloves',p:0.08},{n:'Virgin olive oil',q:'2 tbsp',p:0.40},{n:'Herbs de Provence',q:'2 tsp',p:0.20}], steps:['Preheat oven to 200°C. Cube potatoes, slice zucchini and pepper into chunks.','Toss vegetables with olive oil, herbs de Provence, garlic, salt and pepper on a large baking sheet.','Nestle chicken thighs among the vegetables. Squeeze lemon over everything.','Roast for 30-35 minutes until chicken is golden and cooked through and vegetables are tender.','Let rest 5 minutes before serving. Garnish with fresh herbs if desired.'] , batch:true},
   { type:'dinner', name:'Prawn Stir Fry Noodles', prepMin:15, difficulty:'Easy', cal:420, protein:28, carbs:50, fat:12, fiber:3, diets:['Omnivore','Pescatarian','Flexitarian'], allergens:['Shellfish','Soy','Gluten'], cuisines:['Asian','Japanese'], ingredients:[{n:'Peeled shrimp',q:'150g',p:3.25},{n:'Rice noodles',q:'100g',p:0.40},{n:'Bell pepper',q:'1',p:0.65},{n:'Carrots',q:'1',p:0.15},{n:'Soy sauce',q:'2 tbsp',p:0.15},{n:'Garlic',q:'2 cloves',p:0.05},{n:'Lime',q:'1',p:0.33},{n:'Fresh ginger',q:'thumb',p:0.20}], steps:['Soak rice noodles in hot water until tender, about 8 minutes. Drain.','Stir-fry prawns in a hot wok with garlic and ginger for 2 minutes until pink. Remove.','Add sliced pepper and julienned carrots. Stir-fry 3 minutes.','Return prawns and add noodles. Pour in soy sauce and a squeeze of lime. Toss vigorously.','Serve immediately with fresh herbs and chilli if desired.'] },
   { type:'dinner', name:'Vegetable Lasagne', prepMin:50, difficulty:'Medium', cal:480, protein:20, carbs:48, fat:22, fiber:6, diets:['Omnivore','Vegetarian','Flexitarian'], allergens:['Gluten','Lactose','Eggs'], cuisines:['Italian','Mediterranean','French'], ingredients:[{n:'Whole wheat pasta',q:'6 sheets',p:0.50},{n:'Fresh spinach',q:'200g',p:1.60},{n:'Mushrooms',q:'200g',p:1.00},{n:'Ricotta salata',q:'200g',p:2.10},{n:'Crushed tomatoes',q:'400g',p:0.59},{n:'Grated Parmesan',q:'40g',p:1.20},{n:'Garlic',q:'2 cloves',p:0.05},{n:'Onions',q:'1',p:0.20}], steps:['Sauté onion and garlic. Add mushrooms, cook 5 min. Add spinach, wilt. Season well.','Make tomato sauce: simmer crushed tomatoes with herbs for 10 minutes.','Layer in a baking dish: tomato sauce, pasta sheets, vegetable filling, dollops of ricotta. Repeat.','Finish with tomato sauce and a generous layer of Parmesan.','Bake at 190°C for 25-30 minutes until golden and bubbling. Rest 10 minutes before serving.'] , batch:true, organic:true},
-  { type:'dinner', name:'Cod with Crushed Potatoes & Peas', prepMin:25, difficulty:'Easy', cal:400, protein:34, carbs:38, fat:12, fiber:6, diets:['Omnivore','Pescatarian','Flexitarian'], allergens:[], cuisines:['French','Mediterranean'], ingredients:[{n:'Cod fillet',q:'1 fillet',p:3.25},{n:'Potatoes',q:'200g',p:0.45},{n:'Green beans',q:'80g',p:0.65},{n:'Lemon',q:'1',p:0.36},{n:'Butter',q:'20g',p:0.20},{n:'Fresh parsley',q:'bunch',p:0.30},{n:'Virgin olive oil',q:'1 tbsp',p:0.20}], steps:['Boil potatoes until tender, about 15 minutes. Drain and roughly crush with butter and a splash of milk.','Season cod with salt, pepper and lemon zest. Pan-fry in olive oil for 4 minutes per side.','Blanch green beans for 3-4 minutes until bright and crisp-tender.','Serve cod on a bed of crushed potatoes with green beans. Finish with lemon juice and parsley.'] },
+  { type:'dinner', name:'Cod with Crushed Potatoes & Peas', prepMin:25, difficulty:'Easy', cal:400, protein:34, carbs:38, fat:12, fiber:6, diets:['Omnivore','Pescatarian','Flexitarian'], allergens:['Lactose'], cuisines:['French','Mediterranean'], ingredients:[{n:'Cod fillet',q:'1 fillet',p:3.25},{n:'Potatoes',q:'200g',p:0.45},{n:'Green beans',q:'80g',p:0.65},{n:'Lemon',q:'1',p:0.36},{n:'Butter',q:'20g',p:0.20},{n:'Fresh parsley',q:'bunch',p:0.30},{n:'Virgin olive oil',q:'1 tbsp',p:0.20}], steps:['Boil potatoes until tender, about 15 minutes. Drain and roughly crush with butter and a splash of milk.','Season cod with salt, pepper and lemon zest. Pan-fry in olive oil for 4 minutes per side.','Blanch green beans for 3-4 minutes until bright and crisp-tender.','Serve cod on a bed of crushed potatoes with green beans. Finish with lemon juice and parsley.'] },
   { type:'dinner', name:'Tofu Coconut Curry', prepMin:25, difficulty:'Easy', cal:420, protein:18, carbs:40, fat:22, fiber:5, diets:['Omnivore','Vegetarian','Vegan','Flexitarian'], allergens:['Soy'], cuisines:['Asian','Indian'], ingredients:[{n:'Firm tofu',q:'200g',p:1.25},{n:'Coconut milk',q:'400ml',p:1.49},{n:'Curry powder',q:'2 tbsp',p:0.40},{n:'Onions',q:'1',p:0.20},{n:'Garlic',q:'2 cloves',p:0.05},{n:'Sweet potato',q:'1',p:0.60},{n:'Fresh spinach',q:'60g',p:0.50},{n:'Basmati rice',q:'80g',p:0.25}], steps:['Press and cube tofu. Pan-fry in oil until golden on all sides, about 5 minutes. Remove.','Sauté diced onion until soft. Add garlic and curry powder, cook 1 minute.','Add cubed sweet potato and coconut milk. Simmer 15 minutes until potato is tender.','Stir in tofu and spinach. Cook 2-3 minutes until spinach wilts.','Season with salt, lime juice and serve over basmati rice.'] , batch:true, organic:true},
 
   // ---- ADDITIONAL DINNERS (budget, batch, organic) ----
@@ -1376,7 +1460,7 @@ const MEAL_DB = [
   { type:'dinner', name:'Vegetable Fried Rice', prepMin:20, difficulty:'Easy', cal:400, protein:12, carbs:58, fat:12, fiber:5, diets:['Omnivore','Vegetarian','Vegan','Flexitarian'], allergens:['Soy','Eggs'], cuisines:['Asian','Japanese'], ingredients:[{n:'Basmati rice',q:'150g',p:0.45},{n:'Organic eggs',q:'2',p:0.58},{n:'Carrots',q:'1',p:0.15},{n:'Green onions',q:'3',p:0.30},{n:'Soy sauce',q:'2 tbsp',p:0.15},{n:'Garlic',q:'2 cloves',p:0.05},{n:'Fresh ginger',q:'1 cm',p:0.10}], steps:['Cook rice and spread on a tray to cool (or use day-old rice).','Scramble eggs in a hot wok, set aside.','Stir-fry diced carrots and garlic with ginger for 2 minutes on high heat.','Add rice and soy sauce. Toss vigorously for 3 minutes.','Return eggs, add sliced green onions, toss and serve immediately.'], batch:true, budget:true, organic:true },
   { type:'dinner', name:'Roasted Cauliflower & Tahini Bowl', prepMin:30, difficulty:'Easy', cal:410, protein:14, carbs:44, fat:20, fiber:8, diets:['Omnivore','Vegetarian','Vegan','Flexitarian'], allergens:['Sesame'], cuisines:['Mediterranean','Lebanese'], ingredients:[{n:'Broccoli',q:'1 head (as cauliflower)',p:1.19},{n:'Chickpeas',q:'200g tin',p:0.40},{n:'Tahini',q:'2 tbsp',p:0.55},{n:'Lemon',q:'1',p:0.36},{n:'Quinoa',q:'80g',p:0.48},{n:'Cumin',q:'1 tsp',p:0.10}], steps:['Toss cauliflower florets and drained chickpeas with olive oil, cumin, salt and pepper.','Roast at 200°C for 25 minutes until golden and crispy.','Cook quinoa according to packet instructions.','Whisk tahini with lemon juice and a splash of water for a smooth dressing.','Assemble bowls with quinoa, roasted veg and a generous drizzle of tahini dressing.'], batch:true, budget:true, organic:true },
   { type:'dinner', name:'Egg & Vegetable Stir Fry', prepMin:15, difficulty:'Easy', cal:360, protein:18, carbs:30, fat:18, fiber:5, diets:['Omnivore','Vegetarian','Pescatarian','Flexitarian'], allergens:['Eggs','Soy'], cuisines:['Asian','Japanese'], ingredients:[{n:'Organic eggs',q:'3',p:0.87},{n:'Bell pepper',q:'1',p:0.65},{n:'Zucchini',q:'1',p:0.55},{n:'Green onions',q:'2',p:0.20},{n:'Soy sauce',q:'1 tbsp',p:0.08},{n:'Sesame seeds',q:'1 tsp',p:0.10}], steps:['Beat eggs with a pinch of salt and pepper.','Stir-fry sliced pepper and zucchini in a hot wok for 3 minutes.','Push vegetables to the side, pour in eggs and scramble until just set.','Toss everything together with soy sauce.','Serve topped with sliced green onions and sesame seeds.'], budget:true, organic:true },
-  { type:'dinner', name:'Potato & Leek Soup', prepMin:30, difficulty:'Easy', cal:340, protein:8, carbs:48, fat:12, fiber:6, diets:['Omnivore','Vegetarian','Vegan','Flexitarian'], allergens:[], cuisines:['French','Mediterranean'], ingredients:[{n:'Potatoes',q:'400g',p:0.90},{n:'Onions',q:'1',p:0.20},{n:'Green onions',q:'3 (as leeks)',p:0.30},{n:'Vegetable broth',q:'1 cube',p:0.09},{n:'Butter',q:'20g',p:0.20},{n:'Fresh parsley',q:'handful',p:0.30}], steps:['Melt butter, sauté sliced leeks and onion gently for 5 minutes until soft.','Add peeled and cubed potatoes and vegetable broth with 600ml water.','Bring to a boil, then simmer for 20 minutes until potatoes are very tender.','Blend until smooth (or leave chunky). Season with salt and pepper.','Serve hot, garnished with fresh parsley and a swirl of cream if desired.'], batch:true, budget:true, organic:true },
+  { type:'dinner', name:'Potato & Leek Soup', prepMin:30, difficulty:'Easy', cal:340, protein:8, carbs:48, fat:12, fiber:6, diets:['Omnivore','Vegetarian','Flexitarian'], allergens:['Lactose'], cuisines:['French','Mediterranean'], ingredients:[{n:'Potatoes',q:'400g',p:0.90},{n:'Onions',q:'1',p:0.20},{n:'Green onions',q:'3 (as leeks)',p:0.30},{n:'Vegetable broth',q:'1 cube',p:0.09},{n:'Butter',q:'20g',p:0.20},{n:'Fresh parsley',q:'handful',p:0.30}], steps:['Melt butter, sauté sliced leeks and onion gently for 5 minutes until soft.','Add peeled and cubed potatoes and vegetable broth with 600ml water.','Bring to a boil, then simmer for 20 minutes until potatoes are very tender.','Blend until smooth (or leave chunky). Season with salt and pepper.','Serve hot, garnished with fresh parsley and a swirl of cream if desired.'], batch:true, budget:true, organic:true },
   { type:'dinner', name:'Stuffed Bell Peppers', prepMin:35, difficulty:'Medium', cal:430, protein:16, carbs:50, fat:16, fiber:8, diets:['Omnivore','Vegetarian','Flexitarian'], allergens:['Lactose'], cuisines:['Mediterranean','Italian','Mexican'], ingredients:[{n:'Bell peppers',q:'3 large',p:1.99},{n:'Basmati rice',q:'100g',p:0.30},{n:'Crushed tomatoes',q:'200g',p:0.30},{n:'Onions',q:'1',p:0.20},{n:'Garlic',q:'2 cloves',p:0.05},{n:'Fresh mozzarella',q:'60g',p:0.72},{n:'Fresh basil',q:'handful',p:0.30}], steps:['Cook rice until just tender. Drain and set aside.','Sauté diced onion and garlic, mix with rice, crushed tomatoes, salt and pepper.','Halve peppers and remove seeds. Fill generously with the rice mixture.','Top each half with torn mozzarella.','Bake at 190°C for 25 minutes until peppers are soft and cheese is bubbly. Garnish with basil.'], batch:true, budget:true, organic:true },
 
   // ---- SNACKS (10 recipes) ----
@@ -1386,7 +1470,7 @@ const MEAL_DB = [
   { type:'snack', name:'Guacamole & Tortilla Chips', prepMin:10, difficulty:'Easy', cal:250, protein:4, carbs:22, fat:18, fiber:6, diets:['Omnivore','Vegetarian','Vegan','Flexitarian','Paleo','Keto'], allergens:['Gluten'], cuisines:['Mexican','Mediterranean'], ingredients:[{n:'Avocado',q:'1',p:0.99},{n:'Lime',q:'1',p:0.33},{n:'Red onions',q:'1/4',p:0.10},{n:'Cilantro',q:'handful',p:0.30},{n:'Tortillas',q:'2',p:0.45},{n:'Cherry tomatoes',q:'4',p:0.25}], steps:['Mash avocado with lime juice, finely diced red onion, chopped tomato and cilantro.','Season with salt and pepper.','Cut tortillas into triangles and bake or fry until crispy. Serve with the guacamole.'] , batch:true, budget:true, organic:true},
   { type:'snack', name:'Peanut Butter Banana Toast', prepMin:5, difficulty:'Easy', cal:280, protein:10, carbs:34, fat:14, fiber:4, diets:['Omnivore','Vegetarian','Vegan','Flexitarian'], allergens:['Gluten','Peanuts'], cuisines:['French','Mediterranean','Asian','Mexican','Indian','Italian','Japanese','Lebanese'], ingredients:[{n:'Whole wheat bread',q:'1 slice',p:0.20},{n:'Peanut butter',q:'2 tbsp',p:0.25},{n:'Banana',q:'1/2',p:0.08}], steps:['Toast the bread until golden.','Spread with peanut butter and top with sliced banana. Add a drizzle of honey if desired.'] , budget:true, organic:true},
   { type:'snack', name:'Tzatziki & Veggie Dip', prepMin:10, difficulty:'Easy', cal:160, protein:10, carbs:12, fat:8, fiber:2, diets:['Omnivore','Vegetarian','Flexitarian'], allergens:['Lactose'], cuisines:['Mediterranean','Lebanese','French'], ingredients:[{n:'Greek yogurt',q:'150g',p:0.65},{n:'Cucumber',q:'1/2',p:0.40},{n:'Garlic',q:'1 clove',p:0.03},{n:'Lemon',q:'1/2',p:0.18},{n:'Fresh dill',q:'sprigs',p:0.20},{n:'Carrots',q:'1',p:0.10}], steps:['Grate cucumber and squeeze out excess moisture with a clean cloth.','Mix Greek yogurt with cucumber, crushed garlic, lemon juice, dill, salt and pepper.','Serve with carrot sticks, cucumber slices and pitta if desired.'] , batch:true, budget:true},
-  { type:'snack', name:'Spinach Banana Green Smoothie', prepMin:5, difficulty:'Easy', cal:170, protein:4, carbs:32, fat:3, fiber:4, diets:['Omnivore','Vegetarian','Vegan','Flexitarian','Paleo'], allergens:[], cuisines:['French','Mediterranean','Asian','Mexican','Indian','Italian','Japanese','Lebanese'], ingredients:[{n:'Fresh spinach',q:'50g',p:0.45},{n:'Banana',q:'1 piece',p:0.15},{n:'Almond milk',q:'200ml',p:0.45}], steps:['Blend spinach, banana and almond milk until smooth and vibrant green.','Pour into a glass and serve immediately.'] , budget:true, organic:true},
+  { type:'snack', name:'Spinach Banana Green Smoothie', prepMin:5, difficulty:'Easy', cal:170, protein:4, carbs:32, fat:3, fiber:4, diets:['Omnivore','Vegetarian','Vegan','Flexitarian','Paleo'], allergens:['Tree Nuts'], cuisines:['French','Mediterranean','Asian','Mexican','Indian','Italian','Japanese','Lebanese'], ingredients:[{n:'Fresh spinach',q:'50g',p:0.45},{n:'Banana',q:'1 piece',p:0.15},{n:'Almond milk',q:'200ml',p:0.45}], steps:['Blend spinach, banana and almond milk until smooth and vibrant green.','Pour into a glass and serve immediately.'] , budget:true, organic:true},
   { type:'snack', name:'Trail Mix', prepMin:5, difficulty:'Easy', cal:220, protein:6, carbs:20, fat:14, fiber:3, diets:['Omnivore','Vegetarian','Vegan','Flexitarian','Paleo'], allergens:['Tree Nuts','Peanuts'], cuisines:['French','Mediterranean','Asian','Mexican','Indian','Italian','Japanese','Lebanese'], ingredients:[{n:'Almonds',q:'30g',p:0.50},{n:'Walnuts',q:'20g',p:0.60},{n:'Mixed dried fruit',q:'30g',p:0.45},{n:'Peanuts',q:'20g',p:0.18}], steps:['Combine almonds, walnuts, peanuts and dried fruit in a container.','Shake to mix. Portion into snack-size bags for grab-and-go convenience.'] , batch:true, budget:true, organic:true},
   { type:'snack', name:'Cottage Cheese & Fruit Bowl', prepMin:3, difficulty:'Easy', cal:190, protein:18, carbs:16, fat:6, fiber:2, diets:['Omnivore','Vegetarian','Flexitarian','Keto'], allergens:['Lactose'], cuisines:['French','Mediterranean','Italian','Lebanese'], ingredients:[{n:'Cottage cheese',q:'150g',p:0.65},{n:'Blueberries',q:'50g',p:0.65},{n:'Honey',q:'1 tsp',p:0.10}], steps:['Spoon cottage cheese into a bowl.','Top with blueberries and a drizzle of honey. Add a sprinkle of cinnamon if desired.'] , budget:true, organic:true},
   { type:'snack', name:'Roasted Edamame', prepMin:20, difficulty:'Easy', cal:180, protein:14, carbs:10, fat:8, fiber:5, diets:['Omnivore','Vegetarian','Vegan','Flexitarian'], allergens:['Soy'], cuisines:['Japanese','Asian'], ingredients:[{n:'Edamame',q:'150g',p:1.40},{n:'Virgin olive oil',q:'1 tsp',p:0.10},{n:'Salt & pepper',q:'pinch',p:0.05}], steps:['Toss shelled edamame with olive oil, sea salt and any desired seasoning (garlic powder, chilli).','Spread on a baking tray in a single layer.','Roast at 200°C for 15-18 minutes until crispy and lightly golden. Serve warm or at room temperature.'] , batch:true, budget:true, organic:true},
@@ -1447,13 +1531,16 @@ function generateMealPlan() {
 
   const seed = weekOffset * 1000 + prefs.diet.length * 100 + prefs.mealsPerDay * 10 + prefs.allergies.length;
 
-  // Target calories per meal
+  // Target calories per meal — split depends on how many main meals are chosen.
+  // 1 meal/day: 100% to dinner. 2 meals: 55% lunch + 45% dinner. 3 meals: 25/40/35.
   const totalDailyCal = prefs.calories;
   const snackCal = snackCount > 0 ? 200 * snackCount : 0;
   const mainCal = totalDailyCal - snackCal;
-  const breakfastTarget = mainCal * 0.25;
-  const lunchTarget = mainCal * 0.40;
-  const dinnerTarget = mainCal * 0.35;
+  const mainMealCount = Math.min(3, prefs.mealsPerDay);
+  let breakfastTarget, lunchTarget, dinnerTarget;
+  if (mainMealCount >= 3)      { breakfastTarget = mainCal * 0.25; lunchTarget = mainCal * 0.40; dinnerTarget = mainCal * 0.35; }
+  else if (mainMealCount === 2){ breakfastTarget = 0;              lunchTarget = mainCal * 0.55; dinnerTarget = mainCal * 0.45; }
+  else                          { breakfastTarget = 0;              lunchTarget = 0;              dinnerTarget = mainCal;        }
 
   function pickBest(pool, targetCal, usedNames) {
     const available = pool.filter(m => !usedNames.has(m.name));
@@ -1501,9 +1588,10 @@ function generateMealPlan() {
 
     currentMealPlan = dayNames.map((day, i) => {
       const meals = [];
-      if (prefs.mealsPerDay >= 2 && batchB.length > 0) meals.push(batchB[i % batchB.length]);
-      if (batchL.length > 0) meals.push(batchL[i % batchL.length]);
-      if (prefs.mealsPerDay >= 3 && batchD.length > 0) meals.push(batchD[i % batchD.length]);
+      // Meal order: 1 meal = dinner, 2 = lunch+dinner, 3+ = breakfast+lunch+dinner.
+      if (prefs.mealsPerDay >= 3 && batchB.length > 0) meals.push(batchB[i % batchB.length]);
+      if (prefs.mealsPerDay >= 2 && batchL.length > 0) meals.push(batchL[i % batchL.length]);
+      if (batchD.length > 0) meals.push(batchD[i % batchD.length]);
       for (let s = 0; s < snackCount; s++) {
         if (batchS.length > 0) meals.push(batchS[(i + s) % batchS.length]);
       }
@@ -1516,21 +1604,22 @@ function generateMealPlan() {
     currentMealPlan = dayNames.map((day, i) => {
       const meals = [];
 
-      // Breakfast
-      if (prefs.mealsPerDay >= 2) {
+      // Meal order: 1 meal = dinner, 2 = lunch+dinner, 3+ = breakfast+lunch+dinner.
+      // Breakfast (only with 3 or more meals/day)
+      if (prefs.mealsPerDay >= 3) {
         const b = pickBest(breakfastPool, breakfastTarget, usedB);
         if (b) { meals.push(b); usedB.add(b.name); }
       }
 
-      // Lunch
-      const l = pickBest(lunchPool, lunchTarget, usedL);
-      if (l) { meals.push(l); usedL.add(l.name); }
-
-      // Dinner
-      if (prefs.mealsPerDay >= 3) {
-        const d = pickBest(dinnerPool, dinnerTarget, usedD);
-        if (d) { meals.push(d); usedD.add(d.name); }
+      // Lunch (only with 2 or more meals/day)
+      if (prefs.mealsPerDay >= 2) {
+        const l = pickBest(lunchPool, lunchTarget, usedL);
+        if (l) { meals.push(l); usedL.add(l.name); }
       }
+
+      // Dinner (always)
+      const d = pickBest(dinnerPool, dinnerTarget, usedD);
+      if (d) { meals.push(d); usedD.add(d.name); }
 
       // Snacks
       for (let s = 0; s < snackCount; s++) {
@@ -1541,6 +1630,72 @@ function generateMealPlan() {
       return { day, meals };
     });
   }
+
+  // ----- Scale portions so the daily total matches the user's calorie target.
+  // The base recipe DB is sized at ~1500 kcal/day; without scaling, picking a 2500
+  // kcal target would silently give the user ~1500 kcal of food. We scale each
+  // day's meals (calories, macros, and ingredient quantities) by target/natural,
+  // clamped to keep portions plausible.
+  currentMealPlan = currentMealPlan.map(day => {
+    const naturalCal = day.meals.reduce((s, m) => s + (m.cal || 0), 0);
+    if (naturalCal <= 0) return day;
+    const rawFactor = totalDailyCal / naturalCal;
+    const factor = Math.min(2.5, Math.max(0.5, rawFactor));
+    if (Math.abs(factor - 1) < 0.02) return day;  // already close enough
+    return { ...day, meals: day.meals.map(m => scaleMeal(m, factor)) };
+  });
+}
+
+// Scale a meal proportionally — calories, macros, ingredient quantities and prices.
+function scaleMeal(m, factor) {
+  return Object.assign({}, m, {
+    cal: Math.round(m.cal * factor),
+    protein: Math.round((m.protein || 0) * factor),
+    carbs: Math.round((m.carbs || 0) * factor),
+    fat: Math.round((m.fat || 0) * factor),
+    fiber: Math.round((m.fiber || 0) * factor),
+    ingredients: (m.ingredients || []).map(i => Object.assign({}, i, {
+      q: scaleQuantityString(i.q, factor),
+      p: Math.round((i.p || 0) * factor * 100) / 100
+    })),
+    _scaledBy: factor
+  });
+}
+
+// Parse a quantity string like "80g", "1 tbsp", "1/2 piece", "1 1/2 cups",
+// scale the numeric portion, and re-format with the original unit. Leaves
+// unparseable strings ("handful", "pinch", "to taste") alone.
+function scaleQuantityString(q, factor) {
+  if (!q || factor === 1) return q;
+  const m = q.match(/^\s*(\d+(?:\s+\d+\/\d+)?(?:\.\d+)?(?:\/\d+)?)\s*(.*)$/);
+  if (!m) return q;
+  const numStr = m[1].trim();
+  const unit = m[2].trim();
+  let num;
+  if (/\s/.test(numStr)) {
+    const [whole, frac] = numStr.split(/\s+/);
+    const [a, b] = frac.split('/').map(Number);
+    num = parseInt(whole, 10) + a / b;
+  } else if (numStr.includes('/')) {
+    const [a, b] = numStr.split('/').map(Number);
+    num = a / b;
+  } else {
+    num = parseFloat(numStr);
+  }
+  if (isNaN(num)) return q;
+  let scaled = num * factor;
+  if (unit === 'g' || unit === 'ml') {
+    scaled = scaled < 25 ? Math.round(scaled / 5) * 5 : Math.round(scaled / 10) * 10;
+    return scaled + unit;
+  }
+  if (/^pieces?$/.test(unit)) {
+    const half = Math.round(scaled * 2) / 2;
+    return half + ' piece' + (half !== 1 ? 's' : '');
+  }
+  const fmt = scaled < 1 ? scaled.toFixed(2).replace(/\.?0+$/, '')
+            : scaled < 10 ? scaled.toFixed(1).replace(/\.?0+$/, '')
+            : String(Math.round(scaled));
+  return unit ? fmt + ' ' + unit : fmt;
 }
 
 // ======================================================
@@ -1593,6 +1748,20 @@ function renderMealPlan(filter) {
 // ======================================================
 // DYNAMIC NUTRITION SUMMARY
 // ======================================================
+// Per-day macro targets derived from calorie target and diet pattern.
+// Protein/carbs at 4 kcal/g, fat at 9 kcal/g. Fibre target follows DRI (14g per 1000 kcal).
+function computeMacroTargets(calories, diet) {
+  let pProt = 0.20, pCarbs = 0.50, pFat = 0.30;
+  if (diet === 'Keto')  { pProt = 0.25; pCarbs = 0.05; pFat = 0.70; }
+  else if (diet === 'Paleo') { pProt = 0.30; pCarbs = 0.30; pFat = 0.40; }
+  return {
+    protein: Math.max(1, Math.round(calories * pProt / 4)),
+    carbs:   Math.max(1, Math.round(calories * pCarbs / 4)),
+    fat:     Math.max(1, Math.round(calories * pFat / 9)),
+    fiber:   Math.max(1, Math.round(calories * 14 / 1000)),
+  };
+}
+
 function renderNutritionSummary() {
   const prefs = getPreferences();
   const allMeals = currentMealPlan.flatMap(d => d.meals);
@@ -1606,12 +1775,16 @@ function renderNutritionSummary() {
 
   const calPct = Math.min(100, Math.round((avgCal / prefs.calories) * 100));
 
+  // Macro targets derived from the user's calorie target + diet, not hardcoded.
+  // Defaults are a standard 20/50/30 protein/carb/fat split; Keto and Paleo shift it.
+  const targets = computeMacroTargets(prefs.calories, prefs.diet);
+
   const macros = [
     { label: 'Calories', value: avgCal.toLocaleString('en-GB') + ' kcal', pct: calPct, color: 'var(--orange)' },
-    { label: 'Protein', value: avgProtein + ' g', pct: Math.min(100, Math.round((avgProtein / 120) * 100)), color: 'var(--corail)' },
-    { label: 'Carbs', value: avgCarbs + ' g', pct: Math.min(100, Math.round((avgCarbs / 350) * 100)), color: 'var(--jaune)' },
-    { label: 'Fat', value: avgFat + ' g', pct: Math.min(100, Math.round((avgFat / 100) * 100)), color: 'var(--vert-clair)' },
-    { label: 'Fibre', value: avgFiber + ' g', pct: Math.min(100, Math.round((avgFiber / 40) * 100)), color: 'var(--basilic)' },
+    { label: 'Protein', value: avgProtein + ' g', pct: Math.min(100, Math.round((avgProtein / targets.protein) * 100)), color: 'var(--corail)' },
+    { label: 'Carbs', value: avgCarbs + ' g', pct: Math.min(100, Math.round((avgCarbs / targets.carbs) * 100)), color: 'var(--jaune)' },
+    { label: 'Fat', value: avgFat + ' g', pct: Math.min(100, Math.round((avgFat / targets.fat) * 100)), color: 'var(--vert-clair)' },
+    { label: 'Fibre', value: avgFiber + ' g', pct: Math.min(100, Math.round((avgFiber / targets.fiber) * 100)), color: 'var(--basilic)' },
   ];
 
   document.getElementById('macro-bars').innerHTML = macros.map(m => `
@@ -1791,6 +1964,25 @@ const INSTACART_PRODUCTS = {
 // ======================================================
 let currentIngredients = {};
 
+// Compute how many supermarket packs to buy when an ingredient appears in N recipes.
+// Previously the cart did `price * count`, which billed one full pack per recipe — so
+// a bag of oats used in 5 breakfasts was charged 5x. The new rule: one pack covers
+// `coverage` recipes (default 3), bumped up only when the count exceeds coverage.
+// Override `coverage` on individual INSTACART_PRODUCTS entries when you know the pack
+// size (e.g. spices coverage:20, fresh herbs coverage:2).
+function buildCartLine(item) {
+  const count = item.count || 1;
+  const coverage = item.coverage || 3;
+  const packs = Math.max(1, Math.ceil(count / coverage));
+  return {
+    display: item.display,
+    name: item.name,
+    price: item.price * packs,
+    unit: item.unit,
+    qty: Math.ceil((item.qty || 1) * packs),
+  };
+}
+
 function generateIngredientList() {
   const ingMap = {};
   currentMealPlan.forEach(day => {
@@ -1810,6 +2002,7 @@ function generateIngredientList() {
             price: wp.price,
             unit: wp.unit,
             qty: wp.qty,
+            coverage: wp.coverage,
             count: 1
           };
         }
@@ -1876,7 +2069,7 @@ function renderIngredients() {
     for (const [cat, items] of Object.entries(currentIngredients)) {
       items.forEach((item, idx) => {
         const key = cat + '-' + idx;
-        cart[key] = { display: item.display, name: item.name, price: item.price * (item.count || 1), unit: item.unit, qty: Math.ceil((item.qty || 1) * (item.count || 1)) };
+        cart[key] = buildCartLine(item);
       });
     }
   }
@@ -1927,7 +2120,7 @@ function toggleIngredient(key, el) {
       const idx = parseInt(key.split('-').pop());
       if (key.startsWith(cat) && items[idx]) {
         const item = items[idx];
-        cart[key] = { display: item.display, name: item.name, price: item.price * (item.count || 1), unit: item.unit, qty: Math.ceil((item.qty || 1) * (item.count || 1)) };
+        cart[key] = buildCartLine(item);
         break;
       }
     }
@@ -1946,6 +2139,7 @@ function renderCart() {
     document.getElementById('cart-subtotal').textContent = '£0.00';
     document.getElementById('cart-total').textContent = '£0.00';
     document.getElementById('cart-delivery').textContent = 'via Instacart';
+    updateMobileActionBar();
     return;
   }
   const subtotal = entries.reduce((s, e) => s + e.price, 0);
@@ -1960,6 +2154,7 @@ function renderCart() {
   document.getElementById('cart-subtotal').textContent = '£' + subtotal.toFixed(2);
   document.getElementById('cart-delivery').textContent = 'via Instacart';
   document.getElementById('cart-total').textContent = '£' + subtotal.toFixed(2);
+  updateMobileActionBar();
 }
 
 
@@ -1980,7 +2175,7 @@ function selectAllIngredients() {
     for (const [cat, items] of Object.entries(currentIngredients)) {
       items.forEach((item, idx) => {
         const key = cat + '-' + idx;
-        cart[key] = { display: item.display, name: item.name, price: item.price * (item.count || 1), unit: item.unit, qty: Math.ceil((item.qty || 1) * (item.count || 1)) };
+        cart[key] = buildCartLine(item);
       });
     }
   }
@@ -2172,6 +2367,7 @@ function recipeSlug(name) {
     .toLowerCase()
     .replace(/\b(with|and)\b/g, '')
     .replace(/[^a-z0-9]+/g, '-')
+   
     .replace(/^-+|-+$/g, '');
 }
 
@@ -2421,6 +2617,7 @@ function updateNavForLoggedIn(name) {
 document.getElementById('week-label').textContent = formatWeekLabel(0);
 updateWeekNavButtons();
 regenerateAll();
+updateMobileActionBar();
 
 // Keyboard listener for closing modals
 document.addEventListener('keydown', function(e) {
