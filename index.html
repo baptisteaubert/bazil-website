@@ -865,41 +865,8 @@
     <button class="nav-link" data-page="mealplan" onclick="navigate('mealplan')">My Menu</button>
     <button class="nav-link" data-page="order" onclick="navigate('order')">Order</button>
   </div>
-  <div class="nav-auth">
-    <button class="nav-auth-btn nav-login" onclick="openAuth('login')">Log in</button>
-    <button class="nav-auth-btn nav-signup" onclick="openAuth('signup')">Sign up</button>
-  </div>
   <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
 </nav>
-
-<!-- AUTH MODAL -->
-<div class="auth-overlay" id="auth-overlay" onclick="if(event.target===this)closeAuth()">
-  <div class="auth-modal">
-    <button class="auth-close" onclick="closeAuth()">✕</button>
-    <img class="auth-modal-logo" src="assets/img/logo-basilic.png" alt="Bazil">
-    <div class="auth-modal-title" id="auth-title">Welcome to Bazil</div>
-    <div class="auth-modal-subtitle" id="auth-subtitle">Sign up to save your preferences and meal plans.</div>
-
-    <button class="auth-provider-btn" onclick="authWithGoogle()">
-      <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-      Continue with Google
-    </button>
-
-    <button class="auth-provider-btn" onclick="authWithApple()">
-      <svg viewBox="0 0 24 24"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.32 2.32-2.13 4.42-3.74 4.25z" fill="#000"/></svg>
-      Continue with Apple
-    </button>
-
-    <div class="auth-divider">or</div>
-
-    <input class="auth-email-input" type="email" id="auth-email" placeholder="Enter your email address">
-    <button class="auth-submit-btn" id="auth-submit" onclick="authWithEmail()">Continue with Email</button>
-
-    <div class="auth-switch" id="auth-switch">
-      Already have an account? <a onclick="switchAuth()">Log in</a>
-    </div>
-  </div>
-</div>
 
 <!-- ============================================ -->
 <!-- PAGE 1: DIETARY PREFERENCES                  -->
@@ -1122,7 +1089,7 @@
         <div class="cart-divider"></div>
         <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-muted); margin-bottom:4px;">
           <span>Subtotal</span>
-          <span id="cart-subtotal">£0.00</span>
+          <span id="cart-subtotal">$0.00</span>
         </div>
         <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-muted); margin-bottom:8px;">
           <span>Delivery</span>
@@ -1130,7 +1097,7 @@
         </div>
         <div class="cart-total">
           <span>Total</span>
-          <span id="cart-total">£0.00</span>
+          <span id="cart-total">$0.00</span>
         </div>
 
         <button class="order-btn" id="order-btn" onclick="placeOrder()" style="margin-top:20px;">
@@ -1273,7 +1240,7 @@ function updateMobileActionBar() {
       amountEl.textContent = 'Tick ingredients above to add';
     } else {
       countEl.textContent = itemCount + ' item' + (itemCount > 1 ? 's' : '') + ' in cart';
-      amountEl.textContent = '£' + total.toFixed(2) + ' • via Instacart';
+      amountEl.textContent = '$' + total.toFixed(2) + ' • via Instacart';
     }
   } else {
     btnEl.textContent = 'Order →';
@@ -1283,7 +1250,7 @@ function updateMobileActionBar() {
       amountEl.textContent = 'Get them delivered via Instacart';
     } else {
       countEl.textContent = itemCount + ' item' + (itemCount > 1 ? 's' : '') + ' in cart';
-      amountEl.textContent = '£' + total.toFixed(2) + ' • Review & order';
+      amountEl.textContent = '$' + total.toFixed(2) + ' • Review & order';
     }
   }
 }
@@ -2101,7 +2068,7 @@ function renderIngredients() {
               </div>
               <div class="ing-qty">${item.unit}${item.count > 1 ? ' × ' + item.count : ''}</div>
             </div>
-            <div class="ing-price">£${(item.price * (item.count || 1)).toFixed(2)}</div>
+            <div class="ing-price">$${(item.price * (item.count || 1)).toFixed(2)}</div>
           </div>
         `;
       }).join('')}
@@ -2137,8 +2104,8 @@ function renderCart() {
   const entries = Object.values(cart);
   if (entries.length === 0) {
     container.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:24px; font-size:14px;">Tick ingredients to add them to your cart</div>';
-    document.getElementById('cart-subtotal').textContent = '£0.00';
-    document.getElementById('cart-total').textContent = '£0.00';
+    document.getElementById('cart-subtotal').textContent = '$0.00';
+    document.getElementById('cart-total').textContent = '$0.00';
     document.getElementById('cart-delivery').textContent = 'via Instacart';
     updateMobileActionBar();
     return;
@@ -2148,13 +2115,13 @@ function renderCart() {
   container.innerHTML = entries.map(e => `
     <div class="cart-item">
       <span class="cart-item-name">${e.display}</span>
-      <span class="cart-item-price">£${e.price.toFixed(2)}</span>
+      <span class="cart-item-price">$${e.price.toFixed(2)}</span>
     </div>
   `).join('');
 
-  document.getElementById('cart-subtotal').textContent = '£' + subtotal.toFixed(2);
+  document.getElementById('cart-subtotal').textContent = '$' + subtotal.toFixed(2);
   document.getElementById('cart-delivery').textContent = 'via Instacart';
-  document.getElementById('cart-total').textContent = '£' + subtotal.toFixed(2);
+  document.getElementById('cart-total').textContent = '$' + subtotal.toFixed(2);
   updateMobileActionBar();
 }
 
@@ -2269,7 +2236,7 @@ function openCheckout() {
       <div class="checkout-item-status" id="checkout-status-${i}">${i + 1}</div>
       <div class="checkout-item-info">
         <div class="checkout-item-name">${item.display}</div>
-        <div class="checkout-item-price">£${item.price.toFixed(2)}</div>
+        <div class="checkout-item-price">$${item.price.toFixed(2)}</div>
       </div>
       <span class="checkout-item-link" id="checkout-badge-${i}" style="background:#e8f5e9;color:#108910;font-size:11px;">Ready</span>
     </div>
@@ -2538,82 +2505,6 @@ function toggleMobileMenu() {
   }
 }
 
-// ======================================================
-// AUTH MODAL (Sign up / Log in)
-// ======================================================
-let authMode = 'signup'; // 'signup' or 'login'
-
-function openAuth(mode) {
-  authMode = mode;
-  updateAuthUI();
-  document.getElementById('auth-overlay').classList.add('show');
-}
-
-function closeAuth() {
-  document.getElementById('auth-overlay').classList.remove('show');
-}
-
-function switchAuth() {
-  authMode = authMode === 'signup' ? 'login' : 'signup';
-  updateAuthUI();
-}
-
-function updateAuthUI() {
-  const title = document.getElementById('auth-title');
-  const subtitle = document.getElementById('auth-subtitle');
-  const submit = document.getElementById('auth-submit');
-  const sw = document.getElementById('auth-switch');
-  if (authMode === 'signup') {
-    title.textContent = 'Welcome to Bazil';
-    subtitle.textContent = 'Sign up to save your preferences and meal plans.';
-    submit.textContent = 'Continue with Email';
-    sw.innerHTML = 'Already have an account? <a onclick="switchAuth()">Log in</a>';
-  } else {
-    title.textContent = 'Welcome back';
-    subtitle.textContent = 'Log in to access your saved preferences and meal plans.';
-    submit.textContent = 'Log in with Email';
-    sw.innerHTML = 'Don\'t have an account? <a onclick="switchAuth()">Sign up</a>';
-  }
-}
-
-function authWithGoogle() {
-  closeAuth();
-  showToast('✓ Connected with Google — Welcome to Bazil!');
-  updateNavForLoggedIn('Google User');
-}
-
-function authWithApple() {
-  closeAuth();
-  showToast('✓ Connected with Apple — Welcome to Bazil!');
-  updateNavForLoggedIn('Apple User');
-}
-
-function authWithEmail() {
-  const email = document.getElementById('auth-email').value;
-  if (!email || !email.includes('@')) {
-    showToast('Please enter a valid email address');
-    return;
-  }
-  closeAuth();
-  const name = email.split('@')[0];
-  showToast('✓ ' + (authMode === 'signup' ? 'Account created' : 'Logged in') + ' — Welcome to Bazil!');
-  updateNavForLoggedIn(name);
-}
-
-function updateNavForLoggedIn(name) {
-  const authDiv = document.querySelector('.nav-auth');
-  if (authDiv) {
-    authDiv.innerHTML = `
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="width:34px;height:34px;border-radius:50%;background:var(--jaune);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--basilic);font-size:14px;">
-          ${name.charAt(0).toUpperCase()}
-        </div>
-        <span style="color:rgba(255,255,255,0.9);font-size:13px;font-weight:600;">${name}</span>
-      </div>
-    `;
-  }
-}
-
 // ===== INIT =====
 document.getElementById('week-label').textContent = formatWeekLabel(0);
 updateWeekNavButtons();
@@ -2625,7 +2516,6 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     closeRecipe();
     closeCheckout();
-    closeAuth();
   }
 });
 </script>
