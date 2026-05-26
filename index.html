@@ -22,11 +22,11 @@
   t.src=v;s=b.getElementsByTagName(e)[0];
   s.parentNode.insertBefore(t,s)}(window, document,'script',
   'https://connect.facebook.net/en_US/fbevents.js');
-  fbq('init', 'YOUR_PIXEL_ID_HERE');
+  fbq('init', '965241086123582');
   fbq('track', 'PageView');
   </script>
   <noscript><img height="1" width="1" style="display:none"
-  src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID_HERE&ev=PageView&noscript=1"
+  src="https://www.facebook.com/tr?id=965241086123582&ev=PageView&noscript=1"
   /></noscript>
   <!-- End Meta Pixel Code -->
 
@@ -2500,4 +2500,49 @@ function onPreferenceChange() {
   }, 400);
 }
 
-function regener
+function regenerateAll() {
+  generateMealPlan();
+  renderMealPlan();
+  generateIngredientList();
+  cart = {};
+  renderIngredients();
+  renderCart();
+}
+
+// ======================================================
+// MOBILE MENU
+// ======================================================
+function toggleMobileMenu() {
+  const links = document.querySelector('.nav-links');
+  if (links.style.display === 'flex') {
+    links.style.display = 'none';
+  } else {
+    links.style.display = 'flex';
+    links.style.position = 'absolute';
+    links.style.top = '72px';
+    links.style.left = '0';
+    links.style.right = '0';
+    links.style.background = 'var(--basilic)';
+    links.style.padding = '16px';
+    links.style.flexDirection = 'column';
+    links.style.boxShadow = '0 8px 20px rgba(0,0,0,0.2)';
+  }
+}
+
+// ===== INIT =====
+document.getElementById('week-label').textContent = formatWeekLabel(0);
+updateWeekNavButtons();
+regenerateAll();
+updateMobileActionBar();
+
+// Keyboard listener for closing modals
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeRecipe();
+    closeCheckout();
+  }
+});
+</script>
+
+</body>
+</html>
