@@ -2312,6 +2312,10 @@ function closeCheckout() {
 }
 
 async function sendToInstacart() {
+  // Meta Pixel: track "Order a Basket" conversion
+  if (typeof fbq !== 'undefined') {
+    fbq('trackCustom', 'OrderBasket', { content_category: 'meal_plan' });
+  }
   const items = Object.values(cart);
   if (items.length === 0) return;
 
@@ -2591,14 +2595,4 @@ regenerateAll();
 updateMobileActionBar();
 
 // Keyboard listener for closing modals
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    closeRecipe();
-    closeCheckout();
-    closeLegal();
-  }
-});
-</script>
-
-</body>
-</html>
+documen
