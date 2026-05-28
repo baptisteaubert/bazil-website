@@ -2595,4 +2595,14 @@ regenerateAll();
 updateMobileActionBar();
 
 // Keyboard listener for closing modals
-documen
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeRecipe();
+    closeCheckout();
+    closeLegal();
+  }
+});
+</script>
+
+</body>
+</html>
