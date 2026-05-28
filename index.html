@@ -419,6 +419,23 @@
       font-family: 'Chewy'; font-size: 22px; color: var(--basilic);
       letter-spacing: 1px;
     }
+    .partner-logo.live {
+      font-size: 30px; opacity: 1;
+      display: inline-flex; align-items: center; gap: 10px;
+    }
+    .partner-logo.live::after {
+      content: 'LIVE'; background: var(--basilic); color: #fff;
+      font-family: 'OpenSans', sans-serif; font-weight: 700;
+      font-size: 10px; letter-spacing: 1.5px;
+      padding: 4px 9px; border-radius: 50px;
+    }
+    .partners-row.upcoming { gap: 40px; opacity: 0.5; margin-top: 8px; }
+    .partners-row.upcoming .partner-logo { font-size: 18px; }
+    .partners-sublabel {
+      text-align: center; font-size: 11px; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--text-muted); font-weight: 600;
+      margin-top: 28px; margin-bottom: 10px;
+    }
 
     /* ===== FAQ ===== */
     .faq { background: var(--creme); }
@@ -764,7 +781,10 @@
   <section class="partners">
     <div class="partners-label">Delivered straight to your door</div>
     <div class="partners-row">
-      <div class="partner-logo">Instacart</div>
+      <div class="partner-logo live">Instacart</div>
+    </div>
+    <div class="partners-sublabel">Coming soon</div>
+    <div class="partners-row upcoming">
       <div class="partner-logo">Whole Foods</div>
       <div class="partner-logo">Kroger</div>
       <div class="partner-logo">Walmart</div>

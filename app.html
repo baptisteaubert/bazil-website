@@ -191,16 +191,25 @@
     }
     .hero-content {
       position: relative; z-index: 2; text-align: center;
-      max-width: 680px; padding: 0 24px;
+      max-width: 720px; padding: 0 24px;
+    }
+    .hero-eyebrow {
+      display: inline-block; padding: 6px 16px; border-radius: 50px;
+      background: rgba(245,180,65,0.95); color: var(--basilic-dark, #344f1f);
+      font-family: 'OpenSans', sans-serif; font-weight: 700;
+      font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
+      margin-bottom: 22px;
     }
     .hero-title {
-      font-family: 'Chewy'; font-size: 56px; color: #fff;
-      margin-bottom: 16px; line-height: 1.15;
-      text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+      font-family: 'Chewy'; font-size: 60px; color: #fff;
+      margin-bottom: 18px; line-height: 1.08;
+      text-shadow: 0 4px 30px rgba(0,0,0,0.35);
     }
+    .hero-title .accent { color: var(--jaune); }
     .hero-subtitle {
-      font-family: 'OpenSans'; font-weight: 300; font-size: 20px;
-      color: rgba(255,255,255,0.92); margin-bottom: 32px;
+      font-family: 'OpenSans'; font-weight: 400; font-size: 20px;
+      color: rgba(255,255,255,0.94); margin-bottom: 32px;
+      line-height: 1.55; max-width: 580px; margin-left: auto; margin-right: auto;
     }
     .hero-btn {
       font-family: 'OpenSans'; font-weight: 700; font-size: 16px;
@@ -219,13 +228,25 @@
     /* ===== SECTION STYLES ===== */
     .section { padding: 80px 40px; max-width: 1200px; margin: 0 auto; }
     .section-header { text-align: center; margin-bottom: 56px; }
-    .section-title {
-      font-family: 'Chewy'; font-size: 40px; color: var(--basilic);
-      margin-bottom: 12px;
+    .section-eyebrow {
+      display: inline-block; padding: 7px 16px; border-radius: 50px;
+      background: rgba(239,129,40,0.13); color: var(--orange);
+      font-family: 'OpenSans', sans-serif; font-weight: 700;
+      font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+      margin-bottom: 18px;
     }
-    .section-desc {
-      font-family: 'OpenSans'; font-weight: 400; font-size: 16px;
-      color: var(--text-muted); max-width: 560px; margin: 0 auto;
+    .section-eyebrow.basilic { background: rgba(69,107,42,0.13); color: var(--basilic); }
+    .section-eyebrow.jaune { background: rgba(245,180,65,0.18); color: #a86700; }
+    .section-title {
+      font-family: 'Chewy'; font-size: 48px; color: var(--basilic);
+      margin-bottom: 14px; line-height: 1.1;
+    }
+    .section-title .accent { color: var(--orange); }
+    .section-title .accent-jaune { color: var(--jaune); }
+    .section-desc, .section-subtitle {
+      font-family: 'OpenSans'; font-weight: 400; font-size: 17px;
+      color: var(--text-muted); max-width: 640px; margin: 0 auto;
+      line-height: 1.65;
     }
 
     /* ===== CARDS ===== */
@@ -234,7 +255,7 @@
       box-shadow: var(--shadow-sm); transition: var(--transition);
       overflow: hidden;
     }
-    .card:hover { box-shadow: var(--shadow-md); transform: translateY(-4px); }
+    .card:hover { box-shadow: var(--shadow-lg); transform: translateY(-6px); }
 
     /* ===== PREFERENCES PAGE ===== */
     .pref-grid {
@@ -930,16 +951,18 @@
     <img class="leaf-deco" src="assets/img/feuille-creme.png" style="width:120px; top:40px; left:-20px; transform:rotate(-30deg);">
     <img class="leaf-deco" src="assets/img/feuille-creme.png" style="width:80px; bottom:60px; right:40px; transform:rotate(45deg);">
     <div class="hero-content">
-      <div class="hero-title">Discover, Cook & Share</div>
-      <div class="hero-subtitle">Personalize your meals according to your tastes, allergies and nutritional goals.</div>
-      <button class="hero-btn" onclick="document.getElementById('pref-section').scrollIntoView({behavior:'smooth'})">Configure my preferences</button>
+      <span class="hero-eyebrow">Welcome to Bazil</span>
+      <div class="hero-title">Cook what you <span class="accent">love</span></div>
+      <div class="hero-subtitle">Set your tastes, allergies, and goals — we&apos;ll build a week of meals that&apos;s genuinely yours, then ship the ingredients to your door.</div>
+      <button class="hero-btn" onclick="document.getElementById('pref-section').scrollIntoView({behavior:'smooth'})">Set my preferences →</button>
     </div>
   </div>
 
   <div id="pref-section" class="section">
     <div class="section-header">
-      <div class="section-title">My Dietary Preferences</div>
-      <div class="section-desc">Help us create the perfect menu by stating your preferences and restrictions.</div>
+      <span class="section-eyebrow">Tell us about you</span>
+      <div class="section-title">Let&apos;s make this <span class="accent">delicious</span></div>
+      <div class="section-subtitle">A few quick taps and we&apos;ll craft a menu that fits your tastes, your allergies, and your goals — no compromises, no boring nights.</div>
     </div>
 
     <div class="pref-grid">
@@ -1062,7 +1085,7 @@
   </div>
 
   <div class="save-bar">
-    <button class="save-btn" onclick="savePreferences()">✓ Save my preferences</button>
+    <button class="save-btn" onclick="savePreferences()">Build my menu →</button>
   </div>
 </div>
 
@@ -1071,11 +1094,12 @@
 <!-- ============================================ -->
 <div id="page-mealplan" class="page">
 
-  <div class="hero" style="height: 320px;">
+  <div class="hero" style="height: 340px;">
     <div class="hero-bg" style="background-image: url('assets/img/food-variety.jpg')"></div>
     <div class="hero-content">
-      <div class="hero-title">Your Weekly Menu</div>
-      <div class="hero-subtitle">Balanced and delicious meals, tailored to your preferences.</div>
+      <span class="hero-eyebrow">Your week, plated</span>
+      <div class="hero-title">Seven days of <span class="accent">delicious</span></div>
+      <div class="hero-subtitle">Balanced, exciting meals built around what you love. Tap any dish for the full recipe.</div>
     </div>
   </div>
 
@@ -1108,19 +1132,21 @@
 <!-- ============================================ -->
 <div id="page-order" class="page">
 
-  <div class="hero" style="height: 320px;">
+  <div class="hero" style="height: 340px;">
     <div class="hero-bg" style="background-image: url('assets/img/grocery-bag.jpg')"></div>
     <div class="hero-content">
-      <div class="hero-title">Order with Instacart</div>
-      <div class="hero-subtitle">All the ingredients for your weekly meal plan, delivered to your door via Instacart.</div>
+      <span class="hero-eyebrow">Ready to cook</span>
+      <div class="hero-title">One tap to your <span class="accent">doorstep</span></div>
+      <div class="hero-subtitle">Tick the ingredients you need, hit Shop — Instacart handles the rest.</div>
     </div>
   </div>
 
   <div class="section">
     <!-- Instacart Product List + Cart -->
-    <div class="section-header" style="margin-bottom:24px;">
-      <div class="section-title" style="font-size:28px;">Your Instacart Shopping List</div>
-      <div class="section-desc">Select ingredients and send them to Instacart with one click.</div>
+    <div class="section-header" style="margin-bottom:32px;">
+      <span class="section-eyebrow">Your shopping list</span>
+      <div class="section-title">Hand-picked, ready to <span class="accent">cart</span></div>
+      <div class="section-subtitle">Every ingredient your weekly menu needs — pick what you already have, send the rest to Instacart in one click.</div>
     </div>
 
     <div class="order-layout">
