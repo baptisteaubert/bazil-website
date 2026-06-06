@@ -50,6 +50,14 @@ app.post('/api/instacart/products-link', async (req, res) => {
   }
 });
 
+// Log order clicks with IP
+app.post('/log-order', (req, res) => {
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  const timestamp = new Date().toISOString();
+  console.log(`[ORDER CLICK] ${timestamp} | IP: ${ip}`);
+  res.sendStatus(200);
+});
+
 // SPA fallback — always serve index.html for any other route
 app.get('*', (req, res) => {
   res.set('Cache-Control', 'no-cache');

@@ -2356,6 +2356,8 @@ async function sendToInstacart() {
   if (typeof gtag !== 'undefined') {
     gtag('event', 'order_click', { event_category: 'conversion', event_label: 'instacart' });
   }
+  // Server-side IP logging
+  fetch('/log-order', { method: 'POST' }).catch(() => {});
   const items = Object.values(cart);
   if (items.length === 0) return;
 
