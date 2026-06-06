@@ -2352,6 +2352,10 @@ async function sendToInstacart() {
   if (typeof fbq !== 'undefined') {
     fbq('trackCustom', 'OrderBasket', { content_category: 'meal_plan' });
   }
+  // Google Analytics GA4: track order click
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'order_click', { event_category: 'conversion', event_label: 'instacart' });
+  }
   const items = Object.values(cart);
   if (items.length === 0) return;
 
